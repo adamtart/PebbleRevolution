@@ -62,6 +62,57 @@
 
     {
       "type":     "png",
+      "defName":  "IMAGE_TIME_0_LIGHT",
+      "file":     "images/time_0_light.png"
+    },
+    {
+      "type":     "png",
+      "defName":  "IMAGE_TIME_1_LIGHT",
+      "file":     "images/time_1_light.png"
+    },
+    {
+      "type":     "png",
+      "defName":  "IMAGE_TIME_2_LIGHT",
+      "file":     "images/time_2_light.png"
+    },
+    {
+      "type":     "png",
+      "defName":  "IMAGE_TIME_3_LIGHT",
+      "file":     "images/time_3_light.png"
+    },
+    {
+      "type":     "png",
+      "defName":  "IMAGE_TIME_4_LIGHT",
+      "file":     "images/time_4_light.png"
+    },
+    {
+      "type":     "png",
+      "defName":  "IMAGE_TIME_5_LIGHT",
+      "file":     "images/time_5_light.png"
+    },
+    {
+      "type":     "png",
+      "defName":  "IMAGE_TIME_6_LIGHT",
+      "file":     "images/time_6_light.png"
+    },
+    {
+      "type":     "png",
+      "defName":  "IMAGE_TIME_7_LIGHT",
+      "file":     "images/time_7_light.png"
+    },
+    {
+      "type":     "png",
+      "defName":  "IMAGE_TIME_8_LIGHT",
+      "file":     "images/time_8_light.png"
+    },
+    {
+      "type":     "png",
+      "defName":  "IMAGE_TIME_9_LIGHT",
+      "file":     "images/time_9_light.png"
+    },
+
+    {
+      "type":     "png",
       "defName":  "IMAGE_DATE_0",
       "file":     "images/date_0.png"
     },
@@ -109,6 +160,57 @@
       "type":     "png",
       "defName":  "IMAGE_DATE_9",
       "file":     "images/date_9.png"
+    },
+
+    {
+      "type":     "png",
+      "defName":  "IMAGE_DATE_0_LIGHT",
+      "file":     "images/date_0_light.png"
+    },
+    {
+      "type":     "png",
+      "defName":  "IMAGE_DATE_1_LIGHT",
+      "file":     "images/date_1_light.png"
+    },
+    {
+      "type":     "png",
+      "defName":  "IMAGE_DATE_2_LIGHT",
+      "file":     "images/date_2_light.png"
+    },
+    {
+      "type":     "png",
+      "defName":  "IMAGE_DATE_3_LIGHT",
+      "file":     "images/date_3_light.png"
+    },
+    {
+      "type":     "png",
+      "defName":  "IMAGE_DATE_4_LIGHT",
+      "file":     "images/date_4_light.png"
+    },
+    {
+      "type":     "png",
+      "defName":  "IMAGE_DATE_5_LIGHT",
+      "file":     "images/date_5_light.png"
+    },
+    {
+      "type":     "png",
+      "defName":  "IMAGE_DATE_6_LIGHT",
+      "file":     "images/date_6_light.png"
+    },
+    {
+      "type":     "png",
+      "defName":  "IMAGE_DATE_7_LIGHT",
+      "file":     "images/date_7_light.png"
+    },
+    {
+      "type":     "png",
+      "defName":  "IMAGE_DATE_8_LIGHT",
+      "file":     "images/date_8_light.png"
+    },
+    {
+      "type":     "png",
+      "defName":  "IMAGE_DATE_9_LIGHT",
+      "file":     "images/date_9_light.png"
     },
 
     {

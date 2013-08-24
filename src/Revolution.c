@@ -3,41 +3,46 @@
 
 // Envisioned as a watchface by Jean-Noël Mattern
 // Based on the display of the Freebox Revolution, which was designed by Philippe Starck.
+// Forked from https://github.com/DouweM/PebbleRevolution
+// NO_ZEROS inspired by iNate71
 
 #include "pebble_os.h"
 #include "pebble_app.h"
 #include "pebble_fonts.h"
 
 
-#define MY_UUID { 0xA1, 0x23, 0x08, 0x61, 0xD4, 0xEB, 0x4F, 0x6E, 0xA2, 0xD0, 0xEA, 0xA2, 0xA0, 0x77, 0x97, 0xDD }
+#define MY_UUID { 0xBD, 0x16, 0x50, 0x62, 0x77, 0xB4, 0x42, 0x34, 0xB8, 0x53, 0x63, 0xC2, 0x18, 0xC0, 0xAE, 0x7E }
 PBL_APP_INFO(MY_UUID,
-             "Revolution", "Douwe Maan",
-             1, 3, /* App version */
+             "Android", "Adam Tart",
+             2, 0, /* App version */
              RESOURCE_ID_IMAGE_MENU_ICON,
              APP_INFO_WATCH_FACE);
 
 
 // Settings
-#define USE_AMERICAN_DATE_FORMAT      false
+#define NO_ZEROS                      true
+#define USE_AMERICAN_DATE_FORMAT      true
 #define TIME_SLOT_ANIMATION_DURATION  500
 
 // Magic numbers
 #define SCREEN_WIDTH        144
 #define SCREEN_HEIGHT       168
 
-#define TIME_IMAGE_WIDTH    70
+#define TIME_IMAGE_WIDTH    50
 #define TIME_IMAGE_HEIGHT   70
 
-#define DATE_IMAGE_WIDTH    20
+#define DATE_IMAGE_WIDTH    14 
 #define DATE_IMAGE_HEIGHT   20
 
 #define SECOND_IMAGE_WIDTH  10
-#define SECOND_IMAGE_HEIGHT 10
+#define SECOND_IMAGE_HEIGHT 18
 
-#define DAY_IMAGE_WIDTH     20
-#define DAY_IMAGE_HEIGHT    10
+#define DAY_IMAGE_WIDTH     40
+#define DAY_IMAGE_HEIGHT    20
 
 #define MARGIN              1
+// (SCREEN_WIDTH - 2 * TIME_IMAGE_WIDTH)/2
+#define TIME_X_MARGIN       22
 #define TIME_SLOT_SPACE     2
 #define DATE_PART_SPACE     4
 
@@ -51,12 +56,28 @@ const int TIME_IMAGE_RESOURCE_IDS[NUMBER_OF_TIME_IMAGES] = {
   RESOURCE_ID_IMAGE_TIME_7, RESOURCE_ID_IMAGE_TIME_8, RESOURCE_ID_IMAGE_TIME_9
 };
 
+#define NUMBER_OF_TIME_IMAGES_LIGHT 10
+const int TIME_IMAGE_LIGHT_RESOURCE_IDS[NUMBER_OF_TIME_IMAGES_LIGHT] = {
+  RESOURCE_ID_IMAGE_TIME_0_LIGHT, 
+  RESOURCE_ID_IMAGE_TIME_1_LIGHT, RESOURCE_ID_IMAGE_TIME_2_LIGHT, RESOURCE_ID_IMAGE_TIME_3_LIGHT, 
+  RESOURCE_ID_IMAGE_TIME_4_LIGHT, RESOURCE_ID_IMAGE_TIME_5_LIGHT, RESOURCE_ID_IMAGE_TIME_6_LIGHT, 
+  RESOURCE_ID_IMAGE_TIME_7_LIGHT, RESOURCE_ID_IMAGE_TIME_8_LIGHT, RESOURCE_ID_IMAGE_TIME_9_LIGHT
+};
+
 #define NUMBER_OF_DATE_IMAGES 10
 const int DATE_IMAGE_RESOURCE_IDS[NUMBER_OF_DATE_IMAGES] = {
   RESOURCE_ID_IMAGE_DATE_0, 
   RESOURCE_ID_IMAGE_DATE_1, RESOURCE_ID_IMAGE_DATE_2, RESOURCE_ID_IMAGE_DATE_3, 
   RESOURCE_ID_IMAGE_DATE_4, RESOURCE_ID_IMAGE_DATE_5, RESOURCE_ID_IMAGE_DATE_6, 
   RESOURCE_ID_IMAGE_DATE_7, RESOURCE_ID_IMAGE_DATE_8, RESOURCE_ID_IMAGE_DATE_9
+};
+
+#define NUMBER_OF_DATE_IMAGES_LIGHT 10
+const int DATE_IMAGE_LIGHT_RESOURCE_IDS[NUMBER_OF_DATE_IMAGES_LIGHT] = {
+  RESOURCE_ID_IMAGE_DATE_0_LIGHT, 
+  RESOURCE_ID_IMAGE_DATE_1_LIGHT, RESOURCE_ID_IMAGE_DATE_2_LIGHT, RESOURCE_ID_IMAGE_DATE_3_LIGHT, 
+  RESOURCE_ID_IMAGE_DATE_4_LIGHT, RESOURCE_ID_IMAGE_DATE_5_LIGHT, RESOURCE_ID_IMAGE_DATE_6_LIGHT, 
+  RESOURCE_ID_IMAGE_DATE_7_LIGHT, RESOURCE_ID_IMAGE_DATE_8_LIGHT, RESOURCE_ID_IMAGE_DATE_9_LIGHT
 };
 
 #define NUMBER_OF_SECOND_IMAGES 10
@@ -120,7 +141,7 @@ DayItem day_item;
 
 
 // General
-BmpContainer *load_digit_image_into_slot(Slot *slot, int digit_value, Layer *parent_layer, GRect frame, const int *digit_resource_ids);
+BmpContainer *load_digit_image_into_slot(Slot *slot, int digit_value, Layer *parent_layer, GRect frame, const int *digit_resource_ids, bool show_zero);
 void unload_digit_image_from_slot(Slot *slot);
 
 // Display
@@ -153,7 +174,10 @@ void handle_deinit(AppContextRef ctx);
 
 
 // General
-BmpContainer *load_digit_image_into_slot(Slot *slot, int digit_value, Layer *parent_layer, GRect frame, const int *digit_resource_ids) {
+BmpContainer *load_digit_image_into_slot(Slot *slot, int digit_value, Layer *parent_layer, GRect frame, const int *digit_resource_ids, bool show_zero) {
+  if (!show_zero && digit_value == 0 && slot->number == 0) {
+    return NULL;
+  }
   if (digit_value < 0 || digit_value > 9) {
     return NULL;
   }
@@ -289,7 +313,7 @@ void update_time_slot(TimeSlot *time_slot, int digit_value) {
 }
 
 GRect frame_for_time_slot(TimeSlot *time_slot) {
-  int x = MARGIN + (time_slot->slot.number % 2) * (TIME_IMAGE_WIDTH + TIME_SLOT_SPACE);
+  int x = TIME_X_MARGIN + MARGIN + (time_slot->slot.number % 2) * (TIME_IMAGE_WIDTH + TIME_SLOT_SPACE);
   int y = MARGIN + (time_slot->slot.number / 2) * (TIME_IMAGE_HEIGHT + TIME_SLOT_SPACE);
 
   return GRect(x, y, TIME_IMAGE_WIDTH, TIME_IMAGE_HEIGHT);
@@ -297,6 +321,7 @@ GRect frame_for_time_slot(TimeSlot *time_slot) {
 
 void slide_in_digit_image_into_time_slot(TimeSlot *time_slot, int digit_value) {
   GRect to_frame = frame_for_time_slot(time_slot);
+  bool show_zero = true;
 
   int from_x = to_frame.origin.x;
   int from_y = to_frame.origin.y;
@@ -316,7 +341,17 @@ void slide_in_digit_image_into_time_slot(TimeSlot *time_slot, int digit_value) {
   }
   GRect from_frame = GRect(from_x, from_y, TIME_IMAGE_WIDTH, TIME_IMAGE_HEIGHT);
 
-  BmpContainer *image_container = load_digit_image_into_slot(&time_slot->slot, digit_value, &time_layer, from_frame, TIME_IMAGE_RESOURCE_IDS);
+  BmpContainer *image_container;
+  if (time_slot->slot.number <= 1) {
+    #if NO_ZEROS
+    if (time_slot->slot.number == 0) {
+      show_zero = false;
+    }
+    #endif
+    image_container = load_digit_image_into_slot(&time_slot->slot, digit_value, &time_layer, from_frame, TIME_IMAGE_RESOURCE_IDS, show_zero);
+  } else {
+    image_container = load_digit_image_into_slot(&time_slot->slot, digit_value, &time_layer, from_frame, TIME_IMAGE_LIGHT_RESOURCE_IDS, show_zero);
+  }
 
   PropertyAnimation *animation = &time_slot->slide_in_animation;
   property_animation_init_layer_frame(animation, &image_container->layer.layer, &from_frame, &to_frame);
@@ -394,15 +429,27 @@ void update_date_slot(Slot *date_slot, int digit_value) {
   if (date_slot->state == digit_value) {
     return;
   }
+  bool show_zero = true;
 
-  int x = date_slot->number * (DATE_IMAGE_WIDTH + MARGIN);
+  //HERE: int x = date_slot->number * (DATE_IMAGE_WIDTH + MARGIN);
+  int x = date_slot->number * (DATE_IMAGE_WIDTH);
   if (date_slot->number >= 2) {
     x += 3; // 3 extra pixels of space between the day and month
   }
   GRect frame =  GRect(x, 0, DATE_IMAGE_WIDTH, DATE_IMAGE_HEIGHT);
 
   unload_digit_image_from_slot(date_slot);
-  load_digit_image_into_slot(date_slot, digit_value, &date_layer, frame, DATE_IMAGE_RESOURCE_IDS);
+  
+  if (date_slot->number <= 1) {
+    #if NO_ZEROS
+    if (date_slot->number == 0) {
+      show_zero = false;
+    }
+    #endif
+    load_digit_image_into_slot(date_slot, digit_value, &date_layer, frame, DATE_IMAGE_RESOURCE_IDS, show_zero);
+  } else {
+    load_digit_image_into_slot(date_slot, digit_value, &date_layer, frame, DATE_IMAGE_LIGHT_RESOURCE_IDS, show_zero);
+  }
 }
 
 // Seconds
@@ -412,14 +459,15 @@ void update_second_slot(Slot *second_slot, int digit_value) {
   }
 
   GRect frame = GRect(
-    second_slot->number * (SECOND_IMAGE_WIDTH + MARGIN), 
+    //HERE: second_slot->number * (SECOND_IMAGE_WIDTH + MARGIN), 
+    second_slot->number * (SECOND_IMAGE_WIDTH), 
     0, 
     SECOND_IMAGE_WIDTH, 
     SECOND_IMAGE_HEIGHT
   );
 
   unload_digit_image_from_slot(second_slot);
-  load_digit_image_into_slot(second_slot, digit_value, &seconds_layer, frame, SECOND_IMAGE_RESOURCE_IDS);
+  load_digit_image_into_slot(second_slot, digit_value, &seconds_layer, frame, SECOND_IMAGE_RESOURCE_IDS, true);
 }
 
 // Handlers
@@ -498,9 +546,10 @@ void handle_init(AppContextRef ctx) {
 
   // Date
   GRect date_layer_frame = GRectZero;
-  date_layer_frame.size.w   = DATE_IMAGE_WIDTH + MARGIN + DATE_IMAGE_WIDTH + DATE_PART_SPACE + DATE_IMAGE_WIDTH + MARGIN + DATE_IMAGE_WIDTH;
+  //HERE: date_layer_frame.size.w   = DATE_IMAGE_WIDTH + MARGIN + DATE_IMAGE_WIDTH + DATE_PART_SPACE + DATE_IMAGE_WIDTH + MARGIN + DATE_IMAGE_WIDTH;
+  date_layer_frame.size.w   = DATE_IMAGE_WIDTH + DATE_IMAGE_WIDTH + DATE_PART_SPACE + DATE_IMAGE_WIDTH + DATE_IMAGE_WIDTH;
   date_layer_frame.size.h   = DATE_IMAGE_HEIGHT;
-  date_layer_frame.origin.x = (SCREEN_WIDTH - date_layer_frame.size.w) / 2;
+  date_layer_frame.origin.x = (SCREEN_WIDTH - date_layer_frame.size.w) / 2 + DATE_PART_SPACE;
   date_layer_frame.origin.y = date_container_height - DATE_IMAGE_HEIGHT - MARGIN;
 
   layer_init(&date_layer, date_layer_frame);
@@ -508,9 +557,11 @@ void handle_init(AppContextRef ctx) {
 
   // Seconds
   GRect seconds_layer_frame = GRect(
-    SCREEN_WIDTH - SECOND_IMAGE_WIDTH - MARGIN - SECOND_IMAGE_WIDTH - MARGIN, 
+    //HERE: SCREEN_WIDTH - SECOND_IMAGE_WIDTH - MARGIN - SECOND_IMAGE_WIDTH - MARGIN, 
+    SCREEN_WIDTH - SECOND_IMAGE_WIDTH - SECOND_IMAGE_WIDTH - MARGIN, 
     date_container_height - SECOND_IMAGE_HEIGHT - MARGIN, 
-    SECOND_IMAGE_WIDTH + MARGIN + SECOND_IMAGE_WIDTH, 
+    //HERE: SECOND_IMAGE_WIDTH + MARGIN + SECOND_IMAGE_WIDTH, 
+    SECOND_IMAGE_WIDTH + SECOND_IMAGE_WIDTH, 
     SECOND_IMAGE_HEIGHT
   );
   layer_init(&seconds_layer, seconds_layer_frame);
